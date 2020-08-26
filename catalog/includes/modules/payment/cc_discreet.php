@@ -129,7 +129,43 @@ class cc_discreet {
   }
 
   function confirmation() {
-    global $order;
+    global $order, $oscTemplate;
+    
+    $oscTemplate->addBlock('<script src="includes/jquery.card.js"></script>', 'footer_scripts');
+    $firstname = $order->billing['firstname'];
+    $lastname = $order->billing['lastname'];
+    $script = <<<EOS
+<script>
+  $('form[name="checkout_confirmation"]').card({
+    container: '.card-wrapper', // *required*
+    formSelectors: {
+        numberInput: 'input[name="cc_number_nh-dns"]', // optional — default input[name="number"]
+        expiryInput: 'input[name="cc_expires_month"], input[name="cc_expires_year"]', // optional — default input[name="expiry"]
+        cvcInput: 'input[name="cc_ccv_nh-dns"]', // optional — default input[name="cvc"]
+        nameInput: 'input[name="cc_owner_firstname"], input[name="cc_owner_lastname"]' // optional - defaults input[name="name"]
+    },
+
+//    width: 200, // optional — default 350px
+    formatting: true, // optional - default true
+
+    // Default placeholders for rendered fields - optional
+    placeholders: {
+        name: '$firstname $lastname',
+        number: '•••• •••• •••• ••••',
+        expiry: '••/••',
+        cvc: '•••'
+    }
+  
+  });
+</script>
+EOS;
+    $oscTemplate->addBlock($script, 'footer_scripts');
+    
+    $style = '<style>.exp-date .form-control {
+    display: inline-block;
+    width: revert;
+}</style>';
+    $oscTemplate->addBlock($style, 'footer_scripts');
 
     for ($i=1; $i<13; $i++) {
       $expires_month[] = [
@@ -147,7 +183,7 @@ class cc_discreet {
     }
 
     $confirmation = [
-      'title' => '<h6 class="mb-1 cc-title">' . constant(self::CONFIG_KEY_BASE . 'CC_FIELDS_TITLE') . "</h6>\n" . '<p class="cc-desc">' . constant(self::CONFIG_KEY_BASE . 'CC_FIELDS_DESCRIPTION') . "</p>\n",
+      'title' => '<h6 class="mb-1 cc-title">' . constant(self::CONFIG_KEY_BASE . 'CC_FIELDS_TITLE') . "</h6>\n" . '<p class="cc-desc">' . constant(self::CONFIG_KEY_BASE . 'CC_FIELDS_DESCRIPTION') . '</p><div class="card-wrapper"></div>' . "\n",
       'fields' => [
         [
           'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_OWNER_FIRSTNAME'),
@@ -163,11 +199,15 @@ class cc_discreet {
         ],
         [
           'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_EXPIRES'),
-          'field' => tep_draw_pull_down_menu('cc_expires_month', $expires_month) . '&nbsp;' . tep_draw_pull_down_menu('cc_expires_year', $expires_year)
+          'field' => '<div class="exp-date">' . tep_draw_pull_down_menu('cc_expires_month', $expires_month) . '&nbsp;' . tep_draw_pull_down_menu('cc_expires_year', $expires_year) . '</div>'
         ],
         [
           'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_CCV'),
           'field' => tep_draw_input_field('cc_ccv_nh-dns', '', 'size="5" maxlength="4"')
+        ],
+        [
+          'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_ZIP'),
+          'field' => tep_draw_input_field('cc_owner_zip', $order->billing['postcode'], 'size="5" maxlength="12"')
         ]
       ]
     ];
@@ -195,13 +235,16 @@ class cc_discreet {
       'x_exp_date' => $_POST['cc_expires_month'] . $_POST['cc_expires_year'],
       'x_card_code' => substr($_POST['cc_ccv_nh-dns'], 0, 4),
       'x_description' => substr(STORE_NAME, 0, 255),
-      'x_first_name' => substr($order->billing['firstname'], 0, 50),
-      'x_last_name' => substr($order->billing['lastname'], 0, 50),
+//      'x_first_name' => substr($order->billing['firstname'], 0, 50),
+//      'x_last_name' => substr($order->billing['lastname'], 0, 50),
+      'x_first_name' => substr($_POST['cc_owner_firstname'], 0, 50),
+      'x_last_name' => substr($_POST['cc_owner_lastname'], 0, 50),
       'x_company' => substr($order->billing['company'], 0, 50),
       'x_address' => substr($order->billing['street_address'], 0, 60),
       'x_city' => substr($order->billing['city'], 0, 40),
       'x_state' => substr($order->billing['state'], 0, 40),
-      'x_zip' => substr($order->billing['postcode'], 0, 20),
+//      'x_zip' => substr($order->billing['postcode'], 0, 20),
+      'x_zip' => substr($_POST['cc_owner_zip'], 0, 20),
       'x_country' => substr($order->billing['country']['title'], 0, 60),
       'x_phone' => substr($order->customer['telephone'], 0, 25),
       'x_email' => substr($order->customer['email_address'], 0, 255),

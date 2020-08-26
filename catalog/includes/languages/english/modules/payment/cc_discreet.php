@@ -34,6 +34,7 @@ define($pfx . 'CREDIT_CARD_OWNER_LASTNAME', 'Card Owner Last Name:');
 define($pfx . 'CREDIT_CARD_NUMBER', 'Card Number:');
 define($pfx . 'CREDIT_CARD_EXPIRES', 'Card Expiry Date:');
 define($pfx . 'CREDIT_CARD_CCV', 'Card Code Number (CCV):');
+define($pfx . 'CREDIT_CARD_ZIP', 'Card Owner Zip Code:');
 
 // additional order status names (changing these does not take effect unless you uninstall & reinstall)
 define($pfx . 'TRANSACTIONS_ORDER_STATUS_NAME', 'CC Discreet [Transactions]');
