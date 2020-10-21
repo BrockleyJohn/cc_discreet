@@ -17,7 +17,9 @@
 $pfx = 'MODULE_PAYMENT_CC_DISCREET_';
 define($pfx . 'TEXT_TITLE','Discreet CC Payments');
 define($pfx . 'TEXT_DESCRIPTION','Accept card payments discreetly via authorizenet');
-define($pfx . 'TEXT_PUBLIC_TITLE','Discreet Card Payments');
+define($pfx . 'TEXT_PUBLIC_TITLE','Credit Card (Discreet Processing)');
+//define($pfx . 'TEXT_PUBLIC_DESCRIPTION', '<br><b> Visa/MasterCard/Discover</b>');
+define($pfx . 'TEXT_PUBLIC_DESCRIPTION', '<br><img src="images/ccdiscreet.png">');
 
 define($pfx . 'ERROR_ADMIN_CURL', 'This module requires cURL to be enabled in PHP and will not load until it has been enabled on this webserver.');
 define($pfx . 'ERROR_ADMIN_CONFIGURATION', 'This module will not load until the Login ID, Transaction Key and MD5 Hash for the chosen environment has been configured. Please edit the settings.');
@@ -27,7 +29,9 @@ define($pfx . 'SHIP_BILL_DIFFERENT_ERROR', 'We only ship to the card billing add
 // confirmation 
 // preamble
 define($pfx . 'CC_FIELDS_TITLE', 'Discreet Card Payment');
-if (defined($pfx . 'STATEMENT_MERCHANT_NAME')) define($pfx . 'CC_FIELDS_DESCRIPTION', 'Our name as it appears on statements is:<br/>"' . constant($pfx . 'STATEMENT_MERCHANT_NAME') . '"<br/>and the transaction is:<br/>"' . constant($pfx . 'STATEMENT_TRANSACTION_DESCRIPTION') . '"');
+if (defined($pfx . 'STATEMENT_MERCHANT_NAME')) define($pfx . 'CC_FIELDS_DESCRIPTION', 'The charge will appear on your CC statement as:<br/>"<strong>' . constant($pfx . 'STATEMENT_MERCHANT_NAME') . '</strong>"<br/>and the transaction for:<br/>"<strong>' . constant($pfx . 'STATEMENT_TRANSACTION_DESCRIPTION') . '</strong>"');
+// alert
+define($pfx . 'CREDIT_CARD_ACCEPTED', 'We accept Visa/Mastercard/Discover only');
 // field prompts
 define($pfx . 'CREDIT_CARD_OWNER_FIRSTNAME', 'Card Owner First Name:');
 define($pfx . 'CREDIT_CARD_OWNER_LASTNAME', 'Card Owner Last Name:');
@@ -77,9 +81,14 @@ define($pfx . 'TEXT_CAVV_B', 'CAVV passed validation, information only, no liabi
 // error translations
 define($pfx . 'ERROR_TITLE', 'There has been an error processing your credit card');
 define($pfx . 'ERROR_GENERAL', 'Please try again and if problems persist, please try another payment method.');
-define($pfx . 'ERROR_DECLINED', 'This credit card transaction has been declined. Please try again and if problems persist, please try another credit card or payment method.');
+define($pfx . 'ERROR_DECLINED', 'I\'m sorry, your charge has been declined. Various possibilities, but very often a security measure... helping to ensure against possible fraudulent use. You will have to contact your card company, advise them that this is a legitimate purchase. They may have already contacted you for verification.
+<br><br>
+<strong>PLEASE NOTE:</strong> My DBA (doing business as) name is <span style=\'color:#f00;font-weight:bold\'>GA Online Books</span>. If you speak to a credit card rep, that\'s the name they will need. 
+<br><br>
+Feel free to let me know if there is anything I can do to assist.');
 define($pfx . 'ERROR_INVALID_EXP_DATE', 'The credit card expiration date is invalid. Please check the card information and try again.');
 define($pfx . 'ERROR_EXPIRED', 'The credit card has expired. Please try again with another card or payment method.');
+define($pfx . 'ERROR_AVS', 'Your order was declined due to an AVS (Address Verification System) issue. The zip code provided does not match up with what your card company has on file. If you believe the zip you entered to be correct, please contact your cardholder, ensure what they have matches up. Feel free to try again when resolved.<br><br>Please let me know if there is anything I can do to assist');
 define($pfx . 'ERROR_CCV', 'The credit card code number (CCV) is invalid. Please check the card information and try again.');
 define($pfx . 'ERROR_MERCHANT_ACCOUNT', 'The API Login ID or Transaction Key is invalid or the account is inactive. Please review your module configuration settings and try again.');
 define($pfx . 'ERROR_CURRENCY', 'The supplied currency code is either invalid, not supported, not allowed for this merchant or doesn\'t have an exchange rate. Please review your currency and module configuration settings and try again.');

@@ -17,8 +17,6 @@
 if (isset($_POST['server'])) {
   
   chdir('../../../../');
-  ini_set('error_log', 'php-error.log');
-  error_log("call to portal '". print_r($_POST, true) ."'");
 
   require_once('includes/configure.php');
   require_once('includes/functions/database.php');

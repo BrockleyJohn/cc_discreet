@@ -20,10 +20,11 @@
 class cc_discreet {
   
   var $code, $title, $description, $enabled;
-  var $portal_url = 'https://phoenix.oscommercesites.com/1.0.5.0/ext/modules/payment/cc_discreet/payment_portal.php';
+  var $portal_url = 'https://golden-age-erotica-books.com/catalog/ext/modules/payment/cc_discreet/payment_portal.php';
+//  var $portal_url = 'https://phoenix.oscommercesites.com/1.0.5.0/ext/modules/payment/cc_discreet/payment_portal.php';
 
   const CONFIG_KEY_BASE = 'MODULE_PAYMENT_CC_DISCREET_';
-  const DEBUG = true;
+  const DEBUG = false;
 
   function __construct() {
     global $PHP_SELF, $order;
@@ -42,7 +43,7 @@ class cc_discreet {
       }
     }
 
-    $this->public_title = constant(self::CONFIG_KEY_BASE . 'TEXT_PUBLIC_TITLE');
+    $this->public_title = constant(self::CONFIG_KEY_BASE . 'TEXT_PUBLIC_TITLE') . constant(self::CONFIG_KEY_BASE . 'TEXT_PUBLIC_DESCRIPTION');
     $this->sort_order = $this->sort_order ?? 0;
     $this->order_status = defined(self::CONFIG_KEY_BASE . 'PREPARE_ORDER_STATUS_ID') && ((int)constant(self::CONFIG_KEY_BASE . 'PREPARE_ORDER_STATUS_ID') > 0) ? (int)constant(self::CONFIG_KEY_BASE . 'PREPARE_ORDER_STATUS_ID') : 0;
 
@@ -131,16 +132,21 @@ class cc_discreet {
   function confirmation() {
     global $order, $oscTemplate;
     
-    $oscTemplate->addBlock('<script src="includes/jquery.card.js"></script>', 'footer_scripts');
+    $oscTemplate->addBlock('<script src="includes/card.js"></script>', 'footer_scripts');
     $firstname = $order->billing['firstname'];
     $lastname = $order->billing['lastname'];
+    $msg = MODULE_PAYMENT_CC_DISCREET_CREDIT_CARD_ACCEPTED;
     $script = <<<EOS
 <script>
-  $('form[name="checkout_confirmation"]').card({
+//  $('form[name="checkout_confirmation"]').card({
+var card = new Card({
+
+    form: document.forms['checkout_confirmation'],
     container: '.card-wrapper', // *required*
+
     formSelectors: {
         numberInput: 'input[name="cc_number_nh-dns"]', // optional — default input[name="number"]
-        expiryInput: 'input[name="cc_expires_month"], input[name="cc_expires_year"]', // optional — default input[name="expiry"]
+        expiryInput: 'select[name="cc_expires_month"], select[name="cc_expires_year"]', // optional — default input[name="expiry"]
         cvcInput: 'input[name="cc_ccv_nh-dns"]', // optional — default input[name="cvc"]
         nameInput: 'input[name="cc_owner_firstname"], input[name="cc_owner_lastname"]' // optional - defaults input[name="name"]
     },
@@ -156,6 +162,49 @@ class cc_discreet {
         cvc: '•••'
     }
   
+  });
+  
+  const permitted = ['visa', 'visaelectron', 'mastercard', 'discover'];
+
+  $(function(){
+      year_selector = 'select[name="cc_expires_year"]';
+      month_selector = 'select[name="cc_expires_month"]';
+
+      $(month_selector).change(function(){
+          year = $(year_selector).val() == '' ? '••' : $(year_selector).val();
+          $('.jp-card-expiry').text($(this).val()+'/'+year);
+      });
+      $(year_selector).change(function(){
+          month = $(month_selector).val() == '' ? '••': $(month_selector).val();
+          $('.jp-card-expiry').text(month+'/'+$(this).val());
+      });
+      $(month_selector).add(year_selector).on('focus', function(){
+          $('.jp-card-expiry').addClass('jp-card-focused');
+      }).on('blur', function(){
+          $('.jp-card-expiry').removeClass('jp-card-focused');
+      });
+      
+      $('input[name="cc_number_nh-dns"]').blur(function() {
+        // restrict card types
+        if ($.inArray(card.cardType, permitted) < 0) {
+//          alert('{$msg}');
+          $('#card_msg').css('color', 'red');
+          $('input[name="cc_number_nh-dns"]').focus();
+        } else {
+          $('#card_msg').css('color', 'black');
+        }
+      });
+      
+      $('form[name="checkout_confirmation"] .btn-success').click(function(e){
+        this.disabled = true;
+        if ($.inArray(card.cardType, permitted) < 0) {
+          e.preventDefault();
+          $('input[name="cc_number_nh-dns"]').focus();
+          this.disabled = false;
+        } else {
+          $('form[name="checkout_confirmation"]').submit();
+        }
+      }); 
   });
 </script>
 EOS;
@@ -187,15 +236,15 @@ EOS;
       'fields' => [
         [
           'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_OWNER_FIRSTNAME'),
-          'field' => tep_draw_input_field('cc_owner_firstname', $order->billing['firstname'])
+          'field' => tep_draw_input_field('cc_owner_firstname', $order->billing['firstname'], 'required="required"')
         ],
         [
           'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_OWNER_LASTNAME'),
-          'field' => tep_draw_input_field('cc_owner_lastname', $order->billing['lastname'])
+          'field' => tep_draw_input_field('cc_owner_lastname', $order->billing['lastname'], 'required="required"')
         ],
         [
           'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_NUMBER'),
-          'field' => tep_draw_input_field('cc_number_nh-dns')
+          'field' => '<span id="card_msg" style="font-size:75%">' . MODULE_PAYMENT_CC_DISCREET_CREDIT_CARD_ACCEPTED . '</span> ' . tep_draw_input_field('cc_number_nh-dns', null, 'required="required"')
         ],
         [
           'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_EXPIRES'),
@@ -203,11 +252,11 @@ EOS;
         ],
         [
           'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_CCV'),
-          'field' => tep_draw_input_field('cc_ccv_nh-dns', '', 'size="5" maxlength="4"')
+          'field' => tep_draw_input_field('cc_ccv_nh-dns', '', 'required="required" size="5" maxlength="4"')
         ],
         [
           'title' => constant(self::CONFIG_KEY_BASE . 'CREDIT_CARD_ZIP'),
-          'field' => tep_draw_input_field('cc_owner_zip', $order->billing['postcode'], 'size="5" maxlength="12"')
+          'field' => tep_draw_input_field('cc_owner_zip', $order->billing['postcode'], 'required="required" size="5" maxlength="12"')
         ]
       ]
     ];
@@ -234,7 +283,7 @@ EOS;
       'x_card_num' => substr(preg_replace('/[^0-9]/', '', $_POST['cc_number_nh-dns']), 0, 22),
       'x_exp_date' => $_POST['cc_expires_month'] . $_POST['cc_expires_year'],
       'x_card_code' => substr($_POST['cc_ccv_nh-dns'], 0, 4),
-      'x_description' => substr(STORE_NAME, 0, 255),
+      'x_description' => constant(self::CONFIG_KEY_BASE . 'STATEMENT_MERCHANT_NAME'),
 //      'x_first_name' => substr($order->billing['firstname'], 0, 50),
 //      'x_last_name' => substr($order->billing['lastname'], 0, 50),
       'x_first_name' => substr($_POST['cc_owner_firstname'], 0, 50),
@@ -372,8 +421,11 @@ EOS;
 
     $error = false;
 
+
     if ( ($response['x_response_code'] == '1') || ($response['x_response_code'] == '4') ) {
 //      if ( (tep_not_null($this->hash) && (strtoupper($response['x_MD5_Hash']) != strtoupper(md5($this->hash . $this->login_id . $response['x_trans_id'] . $this->format_raw($order->info['total']))))) || ($response['x_amount'] != $this->format_raw($order->info['total'])) ) {
+
+      $order->info['order_status'] = (constant(self::CONFIG_KEY_BASE . 'CHECKED_ORDER_STATUS_ID') > 0 ? (int)constant(self::CONFIG_KEY_BASE . 'CHECKED_ORDER_STATUS_ID') : (int)DEFAULT_ORDERS_STATUS_ID);
 
       if (self::DEBUG) error_log("hash calculated '" . strtoupper(hash_hmac('sha512','^' . $this->login_id . '^' . $response['x_trans_id'] . '^' . $this->format_raw($order->info['total']) . '^', hex2bin($this->hash))) . "' hash supplied '" . strtoupper($response['x_SHA_Hash']) . "'");
 
@@ -413,9 +465,20 @@ EOS;
         case '28':
           $error = 'declined';
           break;
+          
+        case '27':
+          $error = 'avs';
+          break;
 
         case '39':
           $error = 'currency';
+          break;
+          
+        case '45':
+        case '65':
+          if ($response['x_cvv2_resp_code'] == 'N') {
+            $error = 'ccv';
+          }
           break;
 
         case '78':
@@ -453,7 +516,7 @@ EOS;
 
     curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 
-    if (self::DEBUG) error_log("send to portal on '{$this->portal_url}'");
+    if (self::DEBUG) error_log("send to portal on '{$this->portal_url}' using\n" . print_r($parameters, true));
 
     $result = curl_exec($curl);
 
@@ -607,6 +670,10 @@ EOS;
       case 'ccv':
         $error_message = constant(self::CONFIG_KEY_BASE .  'ERROR_CCV');
         break;
+        
+      case 'avs':
+        $error_message = constant(self::CONFIG_KEY_BASE .  'ERROR_AVS');
+        break;
 
       case 'merchant_account':
         $error_message = constant(self::CONFIG_KEY_BASE .  'ERROR_MERCHANT_ACCOUNT');
@@ -712,6 +779,30 @@ EOS;
       }
 
       if (!empty($_POST)) {
+        if (isset($_POST['cc_number_nh-dns'])) {
+          $_POST['cc_number_nh-dns'] = 'XXXX' . substr($_POST['cc_number_nh-dns'], -4);
+        }
+
+        if (isset($_POST['cc_ccv_nh-dns'])) {
+          $_POST['cc_ccv_nh-dns'] = 'XXX';
+        }
+
+        if (isset($_POST['cc_issue_nh-dns'])) {
+          $_POST['cc_issue_nh-dns'] = 'XXX';
+        }
+
+        if (isset($_POST['cc_expires_month'])) {
+          $_POST['cc_expires_month'] = 'XX';
+        }
+
+        if (isset($_POST['cc_expires_year'])) {
+          $_POST['cc_expires_year'] = 'XX';
+        }
+
+        if (isset($_POST['cc_starts_month'])) {
+          $_POST['cc_starts_month'] = 'XX';
+        }
+
         $email_body .= '$_POST:' . "\n\n" . print_r($_POST, true) . "\n\n";
       }
 
@@ -720,7 +811,7 @@ EOS;
       }
 
       if (!empty($email_body)) {
-        tep_mail('', constant(self::CONFIG_KEY_BASE . 'DEBUG_EMAIL'), 'ANZ eGate Hosted Debug E-Mail', trim($email_body), STORE_OWNER, STORE_OWNER_EMAIL_ADDRESS);
+        tep_mail('', constant(self::CONFIG_KEY_BASE . 'DEBUG_EMAIL'), 'CC Bypass Debug E-Mail', trim($email_body), STORE_OWNER, STORE_OWNER_EMAIL_ADDRESS);
       }
     }
   }
@@ -824,6 +915,13 @@ EOS;
         'value' => 'Products bought',
         'set_func' => 'tep_cfg_select_option(array(\'Products bought\', \'Store name\'), '
       ], */
+      self::CONFIG_KEY_BASE . 'CHECKED_ORDER_STATUS_ID' => [
+        'title' => 'Set Successful Order Status',
+        'desc' => 'Set the status of orders which pass all fraud checks to this value',
+        'value' => '0',
+        'set_func' => 'tep_cfg_pull_down_order_statuses(',
+        'use_func' => 'tep_get_order_status_name'
+      ],
       self::CONFIG_KEY_BASE . 'REVIEW_ORDER_STATUS_ID' => [
         'title' => 'Review Order Status',
         'desc' => 'Set the status of orders flagged for review to this value',
